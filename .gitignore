@@ -95,3 +95,4 @@ dmypy.json
 # Local directories
 .DS_Store
 Thumbs.db
+data/
