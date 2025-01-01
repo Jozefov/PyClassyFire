@@ -1,20 +1,23 @@
 from .api import get_results, structure_query
-from .utils import take_class, MoleCule
+from .utils import take_class, MoleCule, load_existing_results, save_intermediate_results, chunk_tasks, extract_smiles_classification
 import json
 import time
 from tqdm import tqdm
-from requests.exceptions import HTTPError
-
+from requests.exceptions import HTTPError, ConnectionError
+from http.client import RemoteDisconnected
+import logging
+import os
 
 class Job:
     def __init__(self, smiles: list[str]):
-        assert len(smiles) <= 1000
+        assert len(smiles) <= 100
         self.smiles = smiles
         self.query_id = None
         self.start_time = None
 
     def submit(self):
-        self.query_id = structure_query("\\n".join(self.smiles))
+        # Use actual newline characters instead of literal backslashes
+        self.query_id = structure_query("\n".join(self.smiles))
         self.start_time = time.time()
 
     @property
@@ -29,7 +32,7 @@ class Job:
     def parse_results(self) -> list[dict]:
         result = json.loads(get_results(self.query_id))
         return result["entities"]
-    
+
 
 class Scheduler:
     """
@@ -92,3 +95,126 @@ class Scheduler:
                 "subclass": subclasses
             }
         return result
+
+
+def process_batches_with_saving_and_retry(
+        smiles_list,
+        batch_size=100,
+        output_dir='../data/intermediate_results/',
+        max_retries=3,
+        retry_delay=10  # in seconds
+):
+    """
+    Processes SMILES in batches with resumption and improved error handling.
+    Saves each batch immediately after processing.
+
+    Parameters:
+    - smiles_list (list): List of canonical SMILES strings to process.
+    - batch_size (int): Number of SMILES per batch (max 100).
+    - output_dir (str): Directory to save intermediate JSON files.
+    - max_retries (int): Maximum number of retries for failed batches.
+    - retry_delay (int): Delay between retries in seconds.
+
+    Returns:
+    - list: List of paths to saved intermediate JSON files.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Load already processed results and the highest batch number
+    already_processed, max_batch_num = load_existing_results(output_dir)
+    print(f'Already processed SMILES: {len(already_processed)}')
+    logging.info(f'Already processed SMILES: {len(already_processed)}')
+
+    # Identify remaining SMILES to process
+    remaining_smiles = [s for s in smiles_list if s not in already_processed]
+    print(f'Remaining SMILES to process: {len(remaining_smiles)}')
+    logging.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
+
+    # Enforce batch size limit
+    if batch_size > 100:
+        print("Batch size cannot exceed 100. Setting batch_size to 100.")
+        logging.warning("Batch size cannot exceed 100. Setting batch_size to 100.")
+        batch_size = 100
+
+    # Create batches
+    batches = chunk_tasks(remaining_smiles, batch_size)
+    total_batches = len(batches)
+
+    print(f"Total remaining batches to process: {total_batches}")
+    logging.info(f"Total remaining batches to process: {total_batches}")
+
+    if total_batches == 0:
+        print("All batches have already been processed.")
+        return []
+
+    saved_files = []
+
+    pbar = tqdm(total=total_batches, desc="Processing Batches")
+
+    for batch in batches:
+        max_batch_num += 1
+        batch_id = max_batch_num
+        retries = 0
+        while retries <= max_retries:
+            try:
+                # Initialize and submit the job
+                job = Job(batch)
+                job.submit()
+                logging.info(f"Submitted Batch {batch_id} with Query ID {job.query_id}")
+                print(f"Submitted Batch {batch_id} with Query ID {job.query_id}")
+
+                # Poll for job status
+                while True:
+                    time.sleep(60)  # Wait before checking status
+                    try:
+                        result = get_results(job.query_id)
+                        if not result:
+                            raise ValueError("Empty response from API.")
+                        result_json = json.loads(result)
+                    except json.JSONDecodeError as e:
+                        logging.error(f"JSON decode error for Batch {batch_id}: {e}")
+                        raise e
+
+                    classification_status = result_json.get("classification_status")
+                    if classification_status == "Done":
+                        molecules = result_json.get("entities", [])
+                        if not molecules:
+                            print(f"No results returned for Batch {batch_id}.")
+                            logging.warning(f"No results returned for Batch {batch_id}.")
+                        else:
+                            print(f"Batch {batch_id} completed with {len(molecules)} molecules.")
+                            logging.info(f"Batch {batch_id} completed with {len(molecules)} molecules.")
+                        # Save intermediate results
+                        save_intermediate_results(batch_id, molecules, output_dir)
+                        saved_files.append(os.path.join(output_dir, f'intermediate_{batch_id}.json'))
+                        pbar.update(1)
+                        break
+                    elif classification_status == "Error":
+                        error_message = result_json.get("error_message", "Unknown error.")
+                        raise Exception(f"API Error for Batch {batch_id}: {error_message}")
+                    else:
+                        print(f"Batch {batch_id} status: {classification_status}. Waiting...")
+                        logging.info(f"Batch {batch_id} status: {classification_status}. Waiting...")
+
+                # If completed successfully, break out of the retry loop
+                break
+
+            except (HTTPError, RemoteDisconnected, ConnectionError, Exception) as e:
+                retries += 1
+                if retries > max_retries:
+                    print(f"Batch {batch_id}: Maximum retries reached. Skipping batch.")
+                    logging.error(f"Batch {batch_id}: Maximum retries reached. Error: {e}")
+                    # Save an empty list to indicate skipping
+                    save_intermediate_results(batch_id, [], output_dir)
+                    saved_files.append(os.path.join(output_dir, f'intermediate_{batch_id}.json'))
+                    pbar.update(1)
+                    break
+                else:
+                    print(
+                        f"Batch {batch_id}: Error encountered: {e}. Retrying ({retries}/{max_retries}) after {retry_delay} seconds...")
+                    logging.error(
+                        f"Batch {batch_id}: Error encountered: {e}. Retrying ({retries}/{max_retries}) after {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+
+    pbar.close()
+    return saved_files
