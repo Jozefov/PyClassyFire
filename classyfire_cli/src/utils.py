@@ -20,7 +20,7 @@ class MoleCule:
 
     @property
     def canonical_smiles(self):
-        return Chem.MolToSmiles(self.mol, isomericSmiles=False, canonical=True)
+        return Chem.MolToSmiles(self.mol, canonical=True)
     
     def __str__(self):
         return self.canonical_smiles

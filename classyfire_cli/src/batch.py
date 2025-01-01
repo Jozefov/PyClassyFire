@@ -1,3 +1,5 @@
+from idlelib.colorizer import prog_group_name_to_tag
+
 from .api import get_results, structure_query
 from .utils import take_class, MoleCule, load_existing_results, save_intermediate_results, chunk_tasks, extract_smiles_classification
 import json
@@ -125,10 +127,18 @@ def process_batches_with_saving_and_retry(
     print(f'Already processed SMILES: {len(already_processed)}')
     logging.info(f'Already processed SMILES: {len(already_processed)}')
 
+    # Normalize SMILES: ensure no leading/trailing spaces
+    already_processed = set(s for s in already_processed)
+
     # Identify remaining SMILES to process
     remaining_smiles = [s for s in smiles_list if s not in already_processed]
     print(f'Remaining SMILES to process: {len(remaining_smiles)}')
     logging.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
+
+    # Remove duplicates from remaining_smiles
+    remaining_smiles = list(set(remaining_smiles))
+    print(f'Remaining unique SMILES to process after removing duplicates: {len(remaining_smiles)}')
+    logging.info(f'Remaining unique SMILES to process after removing duplicates: {len(remaining_smiles)}')
 
     # Enforce batch size limit
     if batch_size > 100:
@@ -149,7 +159,9 @@ def process_batches_with_saving_and_retry(
 
     saved_files = []
 
+    # Initialize progress bar
     pbar = tqdm(total=total_batches, desc="Processing Batches")
+
 
     for batch in batches:
         max_batch_num += 1
