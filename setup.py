@@ -1,5 +1,3 @@
-# setup.py
-
 from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -24,12 +22,11 @@ setup(
     install_requires=[
         'requests>=2.32.3',
         'click>=8.1.7',
-        'rdkit>=2024.3.5',
         'tqdm>=4.66.5',
     ],
     entry_points={
         'console_scripts': [
-            'classyfire=pyclassyfire.cli:main',
+            'pyclassyfire=pyclassyfire.cli:main',
         ],
     },
 )
