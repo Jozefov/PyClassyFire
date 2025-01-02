@@ -3,7 +3,7 @@ import os
 import json
 import logging
 import re
-from typing import List
+from typing import List, Dict
 
 class MoleCule:
     def __init__(self, mol):
@@ -200,17 +200,18 @@ def merge_intermediate_files(
 
 def check_all_smiles_present(
         final_output_path: str,
-        smiles_list: List[str]
-) -> None:
+        original_smiles_list: List[str]
+) -> Dict[str, str]:
     """
     Checks whether all SMILES from the original list are present in the final output JSON file.
+    Returns a mapping from original SMILES to canonical SMILES for the missing SMILES.
 
     Parameters:
     - final_output_path (str): Path to the merged final JSON file.
-    - smiles_list (List[str]): Original list of SMILES strings that were classified.
+    - original_smiles_list (List[str]): Original list of SMILES strings that were classified.
 
     Returns:
-    - None
+    - Dict[str, str]: Mapping from original SMILES to canonical SMILES for missing SMILES.
     """
     # Load the final output JSON
     try:
@@ -218,36 +219,48 @@ def check_all_smiles_present(
             molecules = json.load(f)
     except FileNotFoundError:
         print(f"Final output file {final_output_path} not found.")
-        return
+        return {}
     except json.JSONDecodeError as e:
         print(f"JSON decode error in {final_output_path}: {e}")
-        return
+        return {}
     except Exception as e:
         print(f"Error reading {final_output_path}: {e}")
-        return
+        return {}
 
-    # Extract SMILES from the final output
-    output_smiles = set()
+    # Extract canonical SMILES from the final output
+    output_canonical_smiles = set()
     for molecule in molecules:
         smiles = molecule.get('smiles')
+        if not smiles:
+            continue
         canonical_smiles = MoleCule.from_smiles(smiles).canonical_smiles
         if canonical_smiles:
-            output_smiles.add(canonical_smiles)
+            output_canonical_smiles.add(canonical_smiles)
 
-    smiles_input_canonical_set = set()
-    for smiles in smiles_list:
-        canonical_smiles = MoleCule.from_smiles(smiles).canonical_smiles
-        if canonical_smiles:
-            smiles_input_canonical_set.add(canonical_smiles)
+    # Map original SMILES to canonical SMILES
+    original_to_canonical = {}
+    for smi in original_smiles_list:
+        canonical_smi = MoleCule.from_smiles(smi).canonical_smiles
+        if canonical_smi:
+            original_to_canonical[smi] = canonical_smi
 
+    # Identify missing canonical SMILES
+    missing_canonical_smiles = set(
+        canonical for canonical in original_to_canonical.values() if canonical not in output_canonical_smiles
+    )
 
-    # Identify missing SMILES
-    missing_smiles = smiles_input_canonical_set - output_smiles
+    # Create mapping from original SMILES to canonical SMILES for missing SMILES
+    missing_smiles_mapping = {
+        original: canonical
+        for original, canonical in original_to_canonical.items()
+        if canonical in missing_canonical_smiles
+    }
 
-
-    if not missing_smiles:
+    if not missing_smiles_mapping:
         print("All SMILES are present in the final output.")
     else:
-        print(f"Missing {len(missing_smiles)} SMILES in the final output:")
+        print(f"Missing {len(missing_smiles_mapping)} SMILES in the final output:")
         print("Can be caused by server ERROR, try to lower batch and rerun.")
         print("It keeps already processed molecules and will try to retrieve only missing smiles.")
+
+    return missing_smiles_mapping
