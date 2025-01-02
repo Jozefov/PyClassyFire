@@ -29,6 +29,10 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
 	conda env create -f environment.yml
 	conda activate classyfire_env
 	```
+ 3. **Install the Package:**
+	```bash
+	pip install .
+	```
 ### Using pip
 1.  **Clone the Repository:**
 	```bash
@@ -47,7 +51,7 @@ PyClassyFire provides a command-line interface (CLI) to interact with the Classy
 After installation, you can use the classyfire command to classify your chemical compounds.
 
 ```bash
-	pyclassyfire classify <input_file> <output_dir> [OPTIONS]
+	pyclassyfire <input_file> <output_dir> [OPTIONS]
 ```
 
 **Parameters**
@@ -69,9 +73,37 @@ After installation, you can use the classyfire command to classify your chemical
 **Example**
 
 ```bash
-	pyclassyfire classify data/unique_smiles.tsv results/ --batch_size 50 --max_retries 5 --retry_delay 15
+	pyclassyfire data/unique_smiles.tsv results/ --batch_size 50 --max_retries 5 --retry_delay 15
 ```
 
+## Output Directory Structure
+
+When you run the PyClassyFire classification script, the specified output directory will be organized as follows:
+
+- **logs/**  
+  This subdirectory contains log files that record the details of the classification process.
+
+
+- **intermediate_results/**  
+  Stores intermediate JSON files with results from each batch processed by the ClassyFire API.  Allows the script to resume from the last successful batch in case of interruptions.
+
+
+- **output.json**  
+  The final consolidated JSON file that merges all intermediate results. This file contains classification results for all processed SMILES strings, as returned by the ClassyFire API.
+
+
+- **missing_smiles.json**  
+  This file is generated to identify any problematic SMILES strings that were not successfully processed or matched to SMILES of ClassyFireAPI.  
+  
+- **Structure of `missing_smiles.json`:**
+  
+  ```json
+  {
+      "original_smiles_1": "canonical_smiles_1",
+      "original_smiles_2": "canonical_smiles_2",
+      ...
+  }
+  
 For more detailed instructions and tutorials, refer to the [Notebooks](notebooks/) folder.
 
 ## Input File Format
