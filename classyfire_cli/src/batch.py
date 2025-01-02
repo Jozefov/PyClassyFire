@@ -122,16 +122,23 @@ def process_batches_with_saving_and_retry(
     """
     os.makedirs(output_dir, exist_ok=True)
 
+    smiles_list = list(set(smiles_list))
+    print(f'All  smiles: {len(smiles_list)}')
+
     # Load already processed results and the highest batch number
     already_processed, max_batch_num = load_existing_results(output_dir)
     print(f'Already processed SMILES: {len(already_processed)}')
     logging.info(f'Already processed SMILES: {len(already_processed)}')
 
-    # Normalize SMILES: ensure no leading/trailing spaces
-    already_processed = set(s for s in already_processed)
+    # Normalize SMILES returned from ClassyFire
+    already_processed_tmp = []
+    for smi in already_processed:
+        canonical_smi = MoleCule.from_smiles(smi).canonical_smiles
+        already_processed_tmp.append(canonical_smi)
+    already_processed_set = set(already_processed_tmp)
 
     # Identify remaining SMILES to process
-    remaining_smiles = [s for s in smiles_list if s not in already_processed]
+    remaining_smiles = set(smiles_list) - already_processed_set
     print(f'Remaining SMILES to process: {len(remaining_smiles)}')
     logging.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
 
