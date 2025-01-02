@@ -3,6 +3,7 @@ import os
 import json
 import logging
 import re
+from typing import List
 
 class MoleCule:
     def __init__(self, mol):
@@ -196,3 +197,52 @@ def merge_intermediate_files(
         print(f"Successfully merged {len(intermediate_files)} files into {final_output_path}.")
     except Exception as e:
         print(f"Failed to save merged JSON file {final_output_path}: {e}")
+
+
+def check_all_smiles_present(
+        final_output_path: str,
+        smiles_list: List[str]
+) -> None:
+    """
+    Checks whether all SMILES from the original list are present in the final output JSON file.
+
+    Parameters:
+    - final_output_path (str): Path to the merged final JSON file.
+    - smiles_list (List[str]): Original list of SMILES strings that were classified.
+
+    Returns:
+    - None
+    """
+    # Load the final output JSON
+    try:
+        with open(final_output_path, 'r') as f:
+            molecules = json.load(f)
+    except FileNotFoundError:
+        print(f"Final output file {final_output_path} not found.")
+        return
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error in {final_output_path}: {e}")
+        return
+    except Exception as e:
+        print(f"Error reading {final_output_path}: {e}")
+        return
+
+    # Extract SMILES from the final output
+    output_smiles = set()
+    for molecule in molecules:
+        smiles = molecule.get('smiles')
+        if smiles:
+            output_smiles.add(smiles.strip())
+
+    # Normalize original SMILES list
+    normalized_smiles_list = set(s.strip() for s in smiles_list)
+
+    # Identify missing SMILES
+    missing_smiles = normalized_smiles_list - output_smiles
+
+    if not missing_smiles:
+        print("All SMILES are present in the final output.")
+    else:
+        print(f"Missing {len(missing_smiles)} SMILES in the final output:")
+        for smiles in missing_smiles:
+            print(smiles)
