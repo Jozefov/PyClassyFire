@@ -33,16 +33,12 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
 	```bash
 	pip install .
 	```
-### Using pip
-1.  **Clone the Repository:**
-	```bash
-	git clone https://github.com/Jozefov/PyClassyFire.git
-	cd PyClassyFire
+4. **Verify Installation:**
+    ```bash
+	pyclassyfire --help
 	```
-2.  **Install the Package:**
-	```bash
-	pip install .
-	```
+    You should see the help message detailing usage options.
+
 **Usage**
 PyClassyFire provides a command-line interface (CLI) to interact with the ClassyFire API.
 
@@ -75,6 +71,32 @@ After installation, you can use the classyfire command to classify your chemical
 ```bash
 	pyclassyfire data/unique_smiles.tsv results/ --batch_size 50 --max_retries 5 --retry_delay 15
 ```
+
+## Handling Interruptions
+
+If the classification process is disrupted or interrupted, you can easily resume by rerunning the same command with the original input file and output directory. The script will automatically identify any missing SMILES and continue processing from where it left off.
+
+### Steps to Resume
+
+1. **Rerun the Classification Command:**
+
+    ```bash
+    pyclassyfire classify data/unique_smiles.tsv results/ --batch_size 50 --max_retries 5 --retry_delay 15
+    ```
+
+2. **Automatic Detection:**
+
+    The script will detect unprocessed SMILES and handle them accordingly, ensuring that previously completed batches are not reprocessed.
+
+### Tips
+
+- **Adjusting Batch Size:**
+
+    If you encounter server overload or performance issues, consider reducing the `--batch_size` parameter to decrease the number of SMILES processed per batch. For example:
+
+    ```bash
+    pyclassyfire classify data/unique_smiles.tsv results/ --batch_size 25 --max_retries 5 --retry_delay 15
+    ```
 
 ## Output Directory Structure
 

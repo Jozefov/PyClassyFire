@@ -30,7 +30,7 @@ class MoleCule:
         # mol = self.ts.Canonicalize(self.mol)
         # # Canonicalize SMILES with stereochemistry
         # Chem.SanitizeMol(mol, Chem.SANITIZE_SETAROMATICITY)
-        return Chem.MolToSmiles(self.mol, isomericSmiles=False, canonical=True)
+        return Chem.MolToSmiles(self.mol, isomericSmiles=True, canonical=True)
 
     def __str__(self):
         return self.canonical_smiles

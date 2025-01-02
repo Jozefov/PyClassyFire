@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
+import pathlib
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+HERE = pathlib.Path(__file__).parent
+
+README = (HERE / "README.md").read_text(encoding="utf-8")
 
 setup(
     name='PyClassyFire',
@@ -9,7 +11,7 @@ setup(
     author='Your Name',
     author_email='your.email@example.com',
     description='A Python client for the ClassyFire API for large-scale chemical compound classification.',
-    long_description=long_description,
+    long_description=README,
     long_description_content_type="text/markdown",
     url='https://github.com/Jozefov/PyClassyFire',
     packages=find_packages(),
@@ -17,16 +19,22 @@ setup(
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Chemistry',
     ],
     python_requires='>=3.6',
     install_requires=[
         'requests>=2.32.3',
         'click>=8.1.7',
         'tqdm>=4.66.5',
+        'rdkit>=2024.3.5',
     ],
     entry_points={
         'console_scripts': [
             'pyclassyfire=pyclassyfire.cli:main',
         ],
+    },
+    project_urls={
+        'Source': 'https://github.com/Jozefov/PyClassyFire',
     },
 )
