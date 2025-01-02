@@ -134,3 +134,65 @@ def extract_smiles_classification(molecules):
             }
             extracted[smiles] = classification
     return extracted
+
+def merge_intermediate_files(
+    output_dir: str,
+    final_output_path: str
+) -> None:
+    """
+    Merges all intermediate JSON files in the specified directory into a single JSON file.
+    Removes the top-level batch key from each intermediate file.
+
+    Parameters:
+    - output_dir (str): Directory containing intermediate JSON files.
+    - final_output_path (str): Path to save the merged final JSON file.
+
+    Returns:
+    - None
+    """
+    # Compile regex pattern to match intermediate files
+    # Updated pattern based on user change to 'intermediate_<num>.json'
+    pattern = re.compile(r'intermediate_(\d+)\.json$')
+
+    # List to hold all molecule objects
+    all_molecules = []
+
+    # Find and sort all matching intermediate files
+    intermediate_files = []
+    for file in os.listdir(output_dir):
+        match = pattern.match(file)
+        if match:
+            batch_num = int(match.group(1))
+            intermediate_files.append((batch_num, os.path.join(output_dir, file)))
+
+    # Sort files based on batch number in ascending order
+    intermediate_files.sort(key=lambda x: x[0])
+
+    if not intermediate_files:
+        print("No intermediate files found to merge.")
+        return
+
+    # Iterate through each intermediate file and collect molecule objects
+    for batch_num, file_path in intermediate_files:
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+                # Each file has a single top-level key (e.g., "Batch_1")
+                # Extract the list of molecules
+                for key, molecules in data.items():
+                    if isinstance(molecules, list):
+                        all_molecules.extend(molecules)
+                    else:
+                        print(f"Unexpected format in {file_path}: Expected a list of molecules.")
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error in {file_path}: {e}")
+        except Exception as e:
+            print(f"Error reading {file_path}: {e}")
+
+    # Save the merged list of molecules to the final output JSON file
+    try:
+        with open(final_output_path, 'w') as f_out:
+            json.dump(all_molecules, f_out, indent=4)
+        print(f"Successfully merged {len(intermediate_files)} files into {final_output_path}.")
+    except Exception as e:
+        print(f"Failed to save merged JSON file {final_output_path}: {e}")
