@@ -1,13 +1,19 @@
 from rdkit import Chem
+from rdkit.Chem.MolStandardize import rdMolStandardize
 import os
 import json
 import logging
 import re
 from typing import List, Dict
+from rdkit import RDLogger
+
+# Suppress RDKit warnings globally
+RDLogger.DisableLog('rdApp.*')
 
 class MoleCule:
     def __init__(self, mol):
         self.mol = mol
+        # self.ts = rdMolStandardize.TautomerEnumerator()
 
     @classmethod
     def from_smiles(cls, smiles: str):
@@ -21,8 +27,11 @@ class MoleCule:
 
     @property
     def canonical_smiles(self):
-        return Chem.MolToSmiles(self.mol, canonical=True)
-    
+        # mol = self.ts.Canonicalize(self.mol)
+        # # Canonicalize SMILES with stereochemistry
+        # Chem.SanitizeMol(mol, Chem.SANITIZE_SETAROMATICITY)
+        return Chem.MolToSmiles(self.mol, isomericSmiles=False, canonical=True)
+
     def __str__(self):
         return self.canonical_smiles
     
