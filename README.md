@@ -189,3 +189,8 @@ PyClassyFire was inspired by and builds upon the work of the following GitHub re
   
 
 We thank the authors for their valuable contributions and inspiration.
+
+# To-Do List
+
+- [ ] Task 1 (problematic smiles, unify canonization between api and ours, affect only small portion)
+- [ ] Task 2 (verify installation)
