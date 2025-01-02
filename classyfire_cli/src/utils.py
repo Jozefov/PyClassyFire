@@ -178,7 +178,6 @@ def merge_intermediate_files(
         try:
             with open(file_path, 'r') as f:
                 data = json.load(f)
-                # Each file has a single top-level key (e.g., "Batch_1")
                 # Extract the list of molecules
                 for key, molecules in data.items():
                     if isinstance(molecules, list):

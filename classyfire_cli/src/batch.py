@@ -1,5 +1,4 @@
 from idlelib.colorizer import prog_group_name_to_tag
-
 from .api import get_results, structure_query
 from .utils import take_class, MoleCule, load_existing_results, save_intermediate_results, chunk_tasks, extract_smiles_classification
 import json
@@ -8,6 +7,7 @@ from tqdm import tqdm
 from requests.exceptions import HTTPError, ConnectionError
 from http.client import RemoteDisconnected
 import logging
+import datetime
 import os
 
 class Job:
@@ -104,7 +104,7 @@ def process_batches_with_saving_and_retry(
         batch_size=100,
         output_dir='../data/intermediate_results/',
         max_retries=3,
-        retry_delay=10  # in seconds
+        retry_delay=10
 ):
     """
     Processes SMILES in batches with resumption and improved error handling.
@@ -122,8 +122,37 @@ def process_batches_with_saving_and_retry(
     """
     os.makedirs(output_dir, exist_ok=True)
 
+    # Setup logging
+    logs_dir = os.path.join(output_dir, 'logs')
+    os.makedirs(logs_dir, exist_ok=True)
+
+    # Generate unique log filename based on current time
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_filename = f"log_{current_time}.log"
+    log_filepath = os.path.join(logs_dir, log_filename)
+
+    # Configure logging
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # Prevent adding multiple handlers in Jupyter Notebook
+    if not logger.handlers:
+        fh = logging.FileHandler(log_filepath)
+        fh.setLevel(logging.INFO)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+
     smiles_list = list(set(smiles_list))
     print(f'All  smiles: {len(smiles_list)}')
+    logger.info(f'All SMILES: {len(smiles_list)}')
 
     # Load already processed results and the highest batch number
     already_processed, max_batch_num = load_existing_results(output_dir)
@@ -166,7 +195,6 @@ def process_batches_with_saving_and_retry(
 
     saved_files = []
 
-    # Initialize progress bar
     pbar = tqdm(total=total_batches, desc="Processing Batches")
 
 
@@ -236,4 +264,6 @@ def process_batches_with_saving_and_retry(
                     time.sleep(retry_delay)
 
     pbar.close()
+    logger.info("Processing completed.")
+    print("Processing completed.")
     return saved_files
