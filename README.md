@@ -192,5 +192,5 @@ We thank the authors for their valuable contributions and inspiration.
 
 # To-Do List
 
-- [ ] Task 1 (problematic smiles, unify canonization between api and ours, affect only small portion)
+- [ ] Task 1 (problematic smiles, [LINK](https://www.daylight.com/dayhtml/doc/theory/theory.smiles.html) unify canonization between api and ours, affect only small portion)
 - [ ] Task 2 (verify installation)
