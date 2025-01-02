@@ -230,18 +230,24 @@ def check_all_smiles_present(
     output_smiles = set()
     for molecule in molecules:
         smiles = molecule.get('smiles')
-        if smiles:
-            output_smiles.add(smiles.strip())
+        canonical_smiles = MoleCule.from_smiles(smiles).canonical_smiles
+        if canonical_smiles:
+            output_smiles.add(canonical_smiles)
 
-    # Normalize original SMILES list
-    normalized_smiles_list = set(s.strip() for s in smiles_list)
+    smiles_input_canonical_set = set()
+    for smiles in smiles_list:
+        canonical_smiles = MoleCule.from_smiles(smiles).canonical_smiles
+        if canonical_smiles:
+            smiles_input_canonical_set.add(canonical_smiles)
+
 
     # Identify missing SMILES
-    missing_smiles = normalized_smiles_list - output_smiles
+    missing_smiles = smiles_input_canonical_set - output_smiles
+
 
     if not missing_smiles:
         print("All SMILES are present in the final output.")
     else:
         print(f"Missing {len(missing_smiles)} SMILES in the final output:")
-        for smiles in missing_smiles:
-            print(smiles)
+        print("Can be caused by server ERROR, try to lower batch and rerun.")
+        print("It keeps already processed molecules and will try to retrieve only missing smiles.")

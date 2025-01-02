@@ -7,7 +7,7 @@ from tqdm import tqdm
 from requests.exceptions import HTTPError, ConnectionError
 from http.client import RemoteDisconnected
 import logging
-import datetime
+from datetime import datetime
 import os
 
 class Job:
