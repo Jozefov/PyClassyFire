@@ -11,7 +11,7 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
 - **Batch Processing:** Process large lists of SMILES strings.
 - **Canonicalization:** Ensures consistent SMILES representation using RDKit.
 - **Error Handling:** Handling of parsing and API errors.
-- **Resuming Processed molecules** Enable to start from where we stopped
+- **Resuming Processed molecules:** Enable to start from where we stopped
 
 
 ## Installation

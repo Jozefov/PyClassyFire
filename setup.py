@@ -8,7 +8,7 @@ README = (HERE / "README.md").read_text(encoding="utf-8")
 setup(
     name='PyClassyFire',
     version='0.1.0',
-    author='Your Name',
+    author='Filip Jozefov',
     author_email='your.email@example.com',
     description='A Python client for the ClassyFire API for large-scale chemical compound classification.',
     long_description=README,
