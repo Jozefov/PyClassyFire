@@ -28,6 +28,7 @@ setup(
         'click>=8.1.7',
         'tqdm>=4.66.5',
         'rdkit>=2024.3.5',
+        'pandas>=2.2.3',
     ],
     entry_points={
         'console_scripts': [
