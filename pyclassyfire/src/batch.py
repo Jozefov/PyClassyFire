@@ -1,4 +1,3 @@
-from idlelib.colorizer import prog_group_name_to_tag
 from .api import get_results, structure_query
 from .utils import take_class, MoleCule, load_existing_results, save_intermediate_results, chunk_tasks, extract_smiles_classification
 import json

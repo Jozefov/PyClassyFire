@@ -2,7 +2,6 @@ import click
 import json
 import pandas as pd
 import os
-from datetime import datetime
 
 from .src.utils import (
     MoleCule,

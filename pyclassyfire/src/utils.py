@@ -1,5 +1,4 @@
 from rdkit import Chem
-from rdkit.Chem.MolStandardize import rdMolStandardize
 import os
 import json
 import logging
