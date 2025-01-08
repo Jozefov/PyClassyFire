@@ -27,7 +27,7 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
 2.  **Create and Activate the Conda Environment:**
 	```bash
 	conda env create -f environment.yml
-	conda activate classyfire_env
+	conda activate pyclassyfire_env
 	```
  3. **Install the Package:**
 	```bash

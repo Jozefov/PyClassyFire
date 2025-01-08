@@ -1,4 +1,4 @@
-name: classyfire_env
+name: pyclassyfire_env
 channels:
   - conda-forge
   - defaults
