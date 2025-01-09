@@ -2,10 +2,8 @@ from .api import get_results, structure_query
 from .utils import take_class, MoleCule, load_existing_results, save_intermediate_results, chunk_tasks
 import json
 import time
-import click
 from tqdm import tqdm
 from requests.exceptions import HTTPError, ConnectionError
-from http.client import RemoteDisconnected
 import logging
 from datetime import datetime
 import os
@@ -159,15 +157,8 @@ def process_batches_with_saving_and_retry(
     print(f'Already processed SMILES: {len(already_processed)}')
     logger.info(f'Already processed SMILES: {len(already_processed)}')
 
-    # Normalize SMILES returned from ClassyFire
-    already_processed_tmp = []
-    for smi in already_processed:
-        canonical_smi = MoleCule.from_smiles(smi).canonical_smiles
-        already_processed_tmp.append(canonical_smi)
-    already_processed_set = set(already_processed_tmp)
-
-    # Identify remaining SMILES to process
-    remaining_smiles = set(smiles_list) - already_processed_set
+    # Identify remaining SMILES to process based on original_smiles
+    remaining_smiles = set(smiles_list) - already_processed
     print(f'Remaining SMILES to process: {len(remaining_smiles)}')
     logger.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
 
@@ -211,7 +202,7 @@ def process_batches_with_saving_and_retry(
 
                 # Poll for job status
                 while True:
-                    time.sleep(30)  # Wait before checking status
+                    time.sleep(retry_delay)  # Wait before checking status
                     try:
                         result = get_results(job.query_id)
                         if not result:
@@ -252,7 +243,7 @@ def process_batches_with_saving_and_retry(
                 # If completed successfully, break out of the retry loop
                 break
 
-            except (click.exceptions.BadParameter, ConnectionError, Exception) as e:
+            except (ConnectionError, Exception) as e:
                 retries += 1
                 if retries > max_retries:
                     print(f"Batch {batch_id}: Maximum retries reached. Skipping batch.")
