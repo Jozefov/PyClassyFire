@@ -135,53 +135,37 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
         print(f"Failed to save {file_path}: {e}")
 
 
-def save_smiles_mapping(original_smiles: List[str], canonical_smiles: List[str], output_dir: str):
+def save_smiles_mapping(original_smiles: List[str], output_dir: str):
     """
     Saves a mapping from original SMILES to canonical SMILES in a JSON file.
     Ensures that the mapping is accurate by verifying each pair.
 
     Parameters:
-    - original_smiles (List[str]): List of original SMILES strings.
-    - canonical_smiles (List[str]): List of corresponding canonical SMILES strings.
+    - original_smiles (List[str]): List of original SMILES strings (deduplicated).
     - output_dir (str): Directory where the mapping.json file will be saved.
 
     Returns:
     - None
     """
-    if len(original_smiles) != len(canonical_smiles):
-        raise ValueError("The number of original SMILES must match the number of canonical SMILES.")
+    if not original_smiles:
+        raise ValueError("The original_smiles list is empty. No mapping to save.")
 
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_original_smiles = []
-    unique_canonical_smiles = []
-    for orig, canon in zip(original_smiles, canonical_smiles):
-        if orig not in seen:
-            seen.add(orig)
-            unique_original_smiles.append(orig)
-            unique_canonical_smiles.append(canon)
+    # Canonicalize the original SMILES
+    canonical_smiles = []
+    for smi in original_smiles:
+        molecule = MoleCule.from_smiles(smi)
+        if molecule.canonical_smiles:
+            canonical_smiles.append(molecule.canonical_smiles)
+        else:
+            canonical_smiles.append(None)
+            logging.warning(f"Failed to canonicalize SMILES: {smi}")
+
+    # Check for any canonicalization failures
+    if any(canon is None for canon in canonical_smiles):
+        raise ValueError("One or more SMILES strings could not be canonicalized. Check logs for details.")
 
     # Create the mapping dictionary
-    mapping = {orig: canon for orig, canon in zip(unique_original_smiles, unique_canonical_smiles)}
-
-    # Integrity Check: Verify each mapping is correct
-    mismatches = []
-    for orig, canon in mapping.items():
-        computed_canon = MoleCule.from_smiles(orig).canonical_smiles
-        if computed_canon != canon:
-            mismatches.append({
-                "original_smiles": orig,
-                "expected_canonical": canon,
-                "computed_canonical": computed_canon
-            })
-
-    if mismatches:
-        print("Integrity Check Failed: The following SMILES mappings are incorrect:")
-        for mismatch in mismatches:
-            print(f"Original: {mismatch['original_smiles']}, Expected: {mismatch['expected_canonical']}, Computed: {mismatch['computed_canonical']}")
-        raise ValueError("SMILES mapping integrity check failed. Please review the mismatches.")
-    else:
-        print("All SMILES mappings are correct.")
+    mapping = {orig: canon for orig, canon in zip(original_smiles, canonical_smiles)}
 
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
@@ -194,6 +178,7 @@ def save_smiles_mapping(original_smiles: List[str], canonical_smiles: List[str],
             json.dump(mapping, f, indent=4)
         print(f"Successfully saved SMILES mapping to {mapping_file_path}.")
     except Exception as e:
+        logging.error(f"Failed to save SMILES mapping: {e}")
         print(f"Failed to save SMILES mapping: {e}")
 
 
