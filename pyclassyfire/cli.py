@@ -7,6 +7,7 @@ from .src.utils import (
     MoleCule,
     merge_intermediate_files,
     check_all_smiles_present,
+    save_smiles_mapping,
 
 )
 from .src.batch import process_batches_with_saving_and_retry
@@ -60,20 +61,25 @@ def main(input_file, output_dir, batch_size, max_retries, retry_delay):
             invalid_smiles += 1
             click.echo(f"Invalid SMILES skipped: {smi}")
 
-    # Remove duplicates
+    # 3. Remove duplicates
     smiles_list = list(set(smiles_list))
     click.echo(f'Total unique valid SMILES to process: {len(smiles_list)}')
 
     if invalid_smiles > 0:
         click.echo(f"Number of invalid SMILES skipped: {invalid_smiles}")
 
-    # 3. Define Paths for Intermediate Results and Final Output
+    # 4. Define Paths for Intermediate Results and Final Output
     intermediate_dir = os.path.join(output_dir, 'intermediate_results')
     os.makedirs(intermediate_dir, exist_ok=True)
 
     final_output_path = os.path.join(output_dir, 'output.json')
 
-    # 4. Process Batches with Resumption and Retry Logic
+    # 5. Save the Mapping from Original to Canonical SMILES
+    # Deduplicate original_smiles_list using set to avoid redundancy
+    original_smiles_list = list(set([smi.strip() for smi in identifiers if smi.strip()]))
+    save_smiles_mapping(original_smiles_list, output_dir)
+
+    # 6. Process Batches with Resumption and Retry Logic
     intermediate_files = process_batches_with_saving_and_retry(
         smiles_list=smiles_list,
         batch_size=batch_size,
@@ -82,13 +88,28 @@ def main(input_file, output_dir, batch_size, max_retries, retry_delay):
         retry_delay=retry_delay
     )
 
-    # 5. Merge Intermediate Files into Final Output JSON
+    # 7. Merge Intermediate Files into Final Output JSON
     merge_intermediate_files(intermediate_dir, final_output_path)
 
-    # 6. Check Completeness of Processing
-    # For the mapping, we need to keep track of original SMILES to canonical SMILES
-    original_smiles_list = [smi.strip() for smi in identifiers if smi.strip()]
-    missing_smiles_mapping = check_all_smiles_present(final_output_path, original_smiles_list)
+    # 8. Check Completeness of Processing
+    # Load the mapping.json to map original SMILES to canonical SMILES
+    mapping_file_path = os.path.join(output_dir, 'mapping.json')
+    try:
+        with open(mapping_file_path, 'r') as f:
+            mapping = json.load(f)
+    except Exception as e:
+        raise ValueError(f"Failed to load mapping.json: {e}")
+
+    # Prepare the list of canonical SMILES that correspond to the original SMILES
+    # Only include SMILES that were successfully mapped
+    mapped_canonical_smiles = [mapping[smi] for smi in original_smiles_list if
+                               smi in mapping and mapping[smi] is not None]
+
+    # Remove duplicates to match processing
+    mapped_canonical_smiles = list(set(mapped_canonical_smiles))
+
+    # Check if all mapped canonical SMILES are present in the final output
+    missing_smiles_mapping = check_all_smiles_present(final_output_path, mapped_canonical_smiles)
 
     # 7. Save Missing SMILES Mapping if Any
     if missing_smiles_mapping:
