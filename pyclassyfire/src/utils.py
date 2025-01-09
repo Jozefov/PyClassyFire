@@ -133,27 +133,27 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
         print(f"Failed to save {file_path}: {e}")
 
 
-def extract_smiles_classification(molecules):
-    """
-    Converts list of molecule dicts to a SMILES: classification_details dict.
-
-    Parameters:
-    - molecules (list): List of molecule dictionaries.
-
-    Returns:
-    - dict: Mapping from SMILES to their classification details.
-    """
-    extracted = {}
-    for molecule in molecules:
-        smiles = molecule.get('smiles')
-        if smiles:
-            classification = {
-                "superclass": molecule.get('superclass', {}).get('name', 'Unknown'),
-                "class": molecule.get('class', {}).get('name', 'Unknown'),
-                "subclass": molecule.get('subclass', {}).get('name', 'Unknown')
-            }
-            extracted[smiles] = classification
-    return extracted
+# def extract_smiles_classification(molecules):
+#     """
+#     Converts list of molecule dicts to a SMILES: classification_details dict.
+#
+#     Parameters:
+#     - molecules (list): List of molecule dictionaries.
+#
+#     Returns:
+#     - dict: Mapping from SMILES to their classification details.
+#     """
+#     extracted = {}
+#     for molecule in molecules:
+#         smiles = molecule.get('smiles')
+#         if smiles:
+#             classification = {
+#                 "superclass": molecule.get('superclass', {}).get('name', 'Unknown'),
+#                 "class": molecule.get('class', {}).get('name', 'Unknown'),
+#                 "subclass": molecule.get('subclass', {}).get('name', 'Unknown')
+#             }
+#             extracted[smiles] = classification
+#     return extracted
 
 def merge_intermediate_files(
     output_dir: str,
