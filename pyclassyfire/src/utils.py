@@ -58,9 +58,9 @@ def take_class(raw: dict | None) -> str:
         return 'Unknown'
 
 
-def load_existing_results(output_dir):
+def load_existing_results(output_dir: str) -> Tuple[set, int]:
     """
-    Loads existing intermediate JSON files and returns a set of already processed SMILES.
+    Loads existing intermediate JSON files and returns a set of already processed original SMILES.
     Also returns the highest batch number to continue numbering correctly.
 
     Parameters:
@@ -68,7 +68,7 @@ def load_existing_results(output_dir):
 
     Returns:
     - tuple:
-        - already_processed (set): Set of SMILES strings that have been processed.
+        - already_processed (set): Set of original SMILES strings that have been processed.
         - max_batch_num (int): The highest batch number found in existing files.
     """
     already_processed = set()
@@ -91,9 +91,9 @@ def load_existing_results(output_dir):
                     # Each file has a single batch_id key mapping to a list of molecule dicts
                     for batch_id, molecules in data.items():
                         for molecule in molecules:
-                            smiles = molecule.get('smiles')
-                            if smiles:
-                                already_processed.add(smiles)
+                            original_smiles = molecule.get('original_smiles')
+                            if original_smiles:
+                                already_processed.add(original_smiles)
                 logging.info(f"Loaded results from {file_path}")
             except Exception as e:
                 logging.error(f"Failed to load {file_path}: {e}")
@@ -155,13 +155,14 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
 #             extracted[smiles] = classification
 #     return extracted
 
+
 def merge_intermediate_files(
     output_dir: str,
     final_output_path: str
 ) -> None:
     """
     Merges all intermediate JSON files in the specified directory into a single JSON file.
-    Removes the top-level batch key from each intermediate file.
+    Preserves the 'original_smiles' field for each molecule.
 
     Parameters:
     - output_dir (str): Directory containing intermediate JSON files.
@@ -171,7 +172,6 @@ def merge_intermediate_files(
     - None
     """
     # Compile regex pattern to match intermediate files
-    # Updated pattern based on user change to 'intermediate_<num>.json'
     pattern = re.compile(r'intermediate_(\d+)\.json$')
 
     # List to hold all molecule objects
@@ -246,34 +246,25 @@ def check_all_smiles_present(
         print(f"Error reading {final_output_path}: {e}")
         return {}
 
-    # Extract canonical SMILES from the final output
-    output_canonical_smiles = set()
+    # Extract original SMILES from the final output
+    output_original_smiles = set()
     for molecule in molecules:
-        smiles = molecule.get('smiles')
-        if not smiles:
-            continue
-        canonical_smiles = MoleCule.from_smiles(smiles).canonical_smiles
-        if canonical_smiles:
-            output_canonical_smiles.add(canonical_smiles)
+        original_smiles = molecule.get('original_smiles')
+        if original_smiles:
+            output_original_smiles.add(original_smiles)
 
-    # Map original SMILES to canonical SMILES
-    original_to_canonical = {}
-    for smi in original_smiles_list:
+    # Create set from original_smiles_list
+    original_smiles_set = set([smi.strip() for smi in original_smiles_list if smi.strip()])
+
+    # Identify missing original SMILES
+    missing_original_smiles = original_smiles_set - output_original_smiles
+
+    # Map original SMILES to their canonical SMILES
+    missing_smiles_mapping = {}
+    for smi in missing_original_smiles:
         canonical_smi = MoleCule.from_smiles(smi).canonical_smiles
         if canonical_smi:
-            original_to_canonical[smi] = canonical_smi
-
-    # Identify missing canonical SMILES
-    missing_canonical_smiles = set(
-        canonical for canonical in original_to_canonical.values() if canonical not in output_canonical_smiles
-    )
-
-    # Create mapping from original SMILES to canonical SMILES for missing SMILES
-    missing_smiles_mapping = {
-        original: canonical
-        for original, canonical in original_to_canonical.items()
-        if canonical in missing_canonical_smiles
-    }
+            missing_smiles_mapping[smi] = canonical_smi
 
     if not missing_smiles_mapping:
         print("All SMILES are present in the final output.")
