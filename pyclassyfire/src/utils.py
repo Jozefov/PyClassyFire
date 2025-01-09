@@ -101,20 +101,31 @@ def load_existing_results(output_dir):
     return already_processed, max_batch_num
 
 
-def save_intermediate_results(batch_num, molecules, output_dir):
+def save_intermediate_results(batch_num, molecules, original_smiles, output_dir):
     """
     Saves the results of a single batch to an intermediate JSON file.
+
+    Each molecule dictionary will include an 'original_smiles' key corresponding to the SMILES sent for classification.
 
     Parameters:
     - batch_num (int): Unique sequential identifier for the batch.
     - molecules (list): List of molecule dictionaries with classification details.
+    - original_smiles (list): List of SMILES strings sent for classification.
     - output_dir (str): Directory to save intermediate JSON files.
     """
     file_name = f'intermediate_{batch_num}.json'
     file_path = os.path.join(output_dir, file_name)
+
+    augmented_molecules = []
+    for mol, orig_smi in zip(molecules, original_smiles):
+        mol['original_smiles'] = orig_smi
+        # Reorder dictionary to have 'original_smiles' first
+        mol = {'original_smiles': mol['original_smiles'], **{k: v for k, v in mol.items() if k != 'original_smiles'}}
+        augmented_molecules.append(mol)
+
     try:
         with open(file_path, 'w') as f:
-            json.dump({f'Batch_{batch_num}': molecules}, f, indent=4)
+            json.dump({f'Batch_{batch_num}': augmented_molecules}, f, indent=4)
         logging.info(f"Saved intermediate results to {file_path}")
         print(f"Saved intermediate results to {file_path}")
     except Exception as e:

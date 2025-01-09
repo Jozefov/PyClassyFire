@@ -2,6 +2,7 @@ from .api import get_results, structure_query
 from .utils import take_class, MoleCule, load_existing_results, save_intermediate_results, chunk_tasks, extract_smiles_classification
 import json
 import time
+import click
 from tqdm import tqdm
 from requests.exceptions import HTTPError, ConnectionError
 from http.client import RemoteDisconnected
@@ -107,7 +108,7 @@ def process_batches_with_saving_and_retry(
 ):
     """
     Processes SMILES in batches with resumption and improved error handling.
-    Saves each batch immediately after processing.
+    Saves each batch immediately after processing, including original SMILES for order-based matching.
 
     Parameters:
     - smiles_list (list): List of canonical SMILES strings to process.
@@ -134,7 +135,7 @@ def process_batches_with_saving_and_retry(
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # Prevent adding multiple handlers in Jupyter Notebook
+    # Prevent adding multiple handlers
     if not logger.handlers:
         fh = logging.FileHandler(log_filepath)
         fh.setLevel(logging.INFO)
@@ -150,13 +151,13 @@ def process_batches_with_saving_and_retry(
         logger.addHandler(ch)
 
     smiles_list = list(set(smiles_list))
-    print(f'All  smiles: {len(smiles_list)}')
+    print(f'All SMILES: {len(smiles_list)}')
     logger.info(f'All SMILES: {len(smiles_list)}')
 
     # Load already processed results and the highest batch number
     already_processed, max_batch_num = load_existing_results(output_dir)
     print(f'Already processed SMILES: {len(already_processed)}')
-    logging.info(f'Already processed SMILES: {len(already_processed)}')
+    logger.info(f'Already processed SMILES: {len(already_processed)}')
 
     # Normalize SMILES returned from ClassyFire
     already_processed_tmp = []
@@ -168,17 +169,17 @@ def process_batches_with_saving_and_retry(
     # Identify remaining SMILES to process
     remaining_smiles = set(smiles_list) - already_processed_set
     print(f'Remaining SMILES to process: {len(remaining_smiles)}')
-    logging.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
+    logger.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
 
     # Remove duplicates from remaining_smiles
     remaining_smiles = list(set(remaining_smiles))
     print(f'Remaining unique SMILES to process after removing duplicates: {len(remaining_smiles)}')
-    logging.info(f'Remaining unique SMILES to process after removing duplicates: {len(remaining_smiles)}')
+    logger.info(f'Remaining unique SMILES to process after removing duplicates: {len(remaining_smiles)}')
 
     # Enforce batch size limit
     if batch_size > 100:
         print("Batch size cannot exceed 100. Setting batch_size to 100.")
-        logging.warning("Batch size cannot exceed 100. Setting batch_size to 100.")
+        logger.warning("Batch size cannot exceed 100. Setting batch_size to 100.")
         batch_size = 100
 
     # Create batches
@@ -186,7 +187,7 @@ def process_batches_with_saving_and_retry(
     total_batches = len(batches)
 
     print(f"Total remaining batches to process: {total_batches}")
-    logging.info(f"Total remaining batches to process: {total_batches}")
+    logger.info(f"Total remaining batches to process: {total_batches}")
 
     if total_batches == 0:
         print("All batches have already been processed.")
@@ -195,7 +196,6 @@ def process_batches_with_saving_and_retry(
     saved_files = []
 
     pbar = tqdm(total=total_batches, desc="Processing Batches")
-
 
     for batch in batches:
         max_batch_num += 1
@@ -211,7 +211,7 @@ def process_batches_with_saving_and_retry(
 
                 # Poll for job status
                 while True:
-                    time.sleep(60)  # Wait before checking status
+                    time.sleep(30)  # Wait before checking status
                     try:
                         result = get_results(job.query_id)
                         if not result:
@@ -224,14 +224,21 @@ def process_batches_with_saving_and_retry(
                     classification_status = result_json.get("classification_status")
                     if classification_status == "Done":
                         molecules = result_json.get("entities", [])
+                        expected_count = len(batch)
+                        returned_count = len(molecules)
+
+                        if returned_count != expected_count:
+                            raise ValueError(f"Batch {batch_id}: Expected {expected_count} molecules, but received {returned_count}.")
+
                         if not molecules:
                             print(f"No results returned for Batch {batch_id}.")
                             logging.warning(f"No results returned for Batch {batch_id}.")
                         else:
-                            print(f"Batch {batch_id} completed with {len(molecules)} molecules.")
-                            logging.info(f"Batch {batch_id} completed with {len(molecules)} molecules.")
-                        # Save intermediate results
-                        save_intermediate_results(batch_id, molecules, output_dir)
+                            print(f"Batch {batch_id} completed with {returned_count} molecules.")
+                            logging.info(f"Batch {batch_id} completed with {returned_count} molecules.")
+
+                        # Save intermediate results with original SMILES
+                        save_intermediate_results(batch_id, molecules, batch, output_dir)
                         saved_files.append(os.path.join(output_dir, f'intermediate_{batch_id}.json'))
                         pbar.update(1)
                         break
@@ -245,13 +252,13 @@ def process_batches_with_saving_and_retry(
                 # If completed successfully, break out of the retry loop
                 break
 
-            except (HTTPError, RemoteDisconnected, ConnectionError, Exception) as e:
+            except (click.exceptions.BadParameter, ConnectionError, Exception) as e:
                 retries += 1
                 if retries > max_retries:
                     print(f"Batch {batch_id}: Maximum retries reached. Skipping batch.")
                     logging.error(f"Batch {batch_id}: Maximum retries reached. Error: {e}")
-                    # Save an empty list to indicate skipping
-                    save_intermediate_results(batch_id, [], output_dir)
+                    # Save intermediate results with empty molecules and original SMILES
+                    save_intermediate_results(batch_id, [], batch, output_dir)
                     saved_files.append(os.path.join(output_dir, f'intermediate_{batch_id}.json'))
                     pbar.update(1)
                     break
