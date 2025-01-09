@@ -1,5 +1,7 @@
 # PyClassyFire
 
+# REWRITTEN
+
 A Python client for the [ClassyFire API](http://classyfire.wishartlab.com/) for large-scale chemical compound classification.
 
 ## Introduction
@@ -12,6 +14,8 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
 - **Canonicalization:** Ensures consistent SMILES representation using RDKit.
 - **Error Handling:** Handling of parsing and API errors.
 - **Resuming Processed molecules:** Enable to start from where we stopped
+- **Mapping Generation:** Create mappings from original to canonical SMILES without interacting with the API.
+- **Merging Results:** Consolidate intermediate JSON results into a single final output.
 
 
 ## Installation
@@ -40,7 +44,14 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
     You should see the help message detailing usage options.
 
 **Usage**
-PyClassyFire provides a command-line interface (CLI) to interact with the ClassyFire API.
+PyClassyFire provides a command-line interface (CLI) with three primary commands to interact with the ClassyFire API:
+1.	classify: Submit SMILES strings to the ClassyFire API for classification.
+
+2. map: Generate a mapping from original SMILES to canonical SMILES without sending data to the API.
+	
+3. merge: Merge intermediate JSON results into a single final JSON file.
+
+### **General Command Structure**
 
 **Running the Script**
 
