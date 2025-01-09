@@ -138,6 +138,7 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
 def save_smiles_mapping(original_smiles: List[str], canonical_smiles: List[str], output_dir: str):
     """
     Saves a mapping from original SMILES to canonical SMILES in a JSON file.
+    Ensures that the mapping is accurate by verifying each pair.
 
     Parameters:
     - original_smiles (List[str]): List of original SMILES strings.
@@ -150,8 +151,37 @@ def save_smiles_mapping(original_smiles: List[str], canonical_smiles: List[str],
     if len(original_smiles) != len(canonical_smiles):
         raise ValueError("The number of original SMILES must match the number of canonical SMILES.")
 
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_original_smiles = []
+    unique_canonical_smiles = []
+    for orig, canon in zip(original_smiles, canonical_smiles):
+        if orig not in seen:
+            seen.add(orig)
+            unique_original_smiles.append(orig)
+            unique_canonical_smiles.append(canon)
+
     # Create the mapping dictionary
-    mapping = {orig: canon for orig, canon in zip(original_smiles, canonical_smiles)}
+    mapping = {orig: canon for orig, canon in zip(unique_original_smiles, unique_canonical_smiles)}
+
+    # Integrity Check: Verify each mapping is correct
+    mismatches = []
+    for orig, canon in mapping.items():
+        computed_canon = MoleCule.from_smiles(orig).canonical_smiles
+        if computed_canon != canon:
+            mismatches.append({
+                "original_smiles": orig,
+                "expected_canonical": canon,
+                "computed_canonical": computed_canon
+            })
+
+    if mismatches:
+        print("Integrity Check Failed: The following SMILES mappings are incorrect:")
+        for mismatch in mismatches:
+            print(f"Original: {mismatch['original_smiles']}, Expected: {mismatch['expected_canonical']}, Computed: {mismatch['computed_canonical']}")
+        raise ValueError("SMILES mapping integrity check failed. Please review the mismatches.")
+    else:
+        print("All SMILES mappings are correct.")
 
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
