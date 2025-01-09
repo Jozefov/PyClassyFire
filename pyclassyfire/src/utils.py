@@ -3,7 +3,7 @@ import os
 import json
 import logging
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 from rdkit import RDLogger
 
 # Suppress RDKit warnings globally
@@ -93,7 +93,7 @@ def load_existing_results(output_dir: str) -> Tuple[Set[str], int]:
                     for batch_id, molecules in data.items():
                         if molecules:  # Only add if molecules are present
                             for molecule in molecules:
-                                original_smiles = molecule.get('original_smiles')
+                                original_smiles = molecule.get('original_canonized_smiles')
                                 if original_smiles:
                                     already_processed.add(original_smiles)
                 logging.info(f"Loaded results from {file_path}")
@@ -120,9 +120,9 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
 
     augmented_molecules = []
     for mol, orig_smi in zip(molecules, original_smiles):
-        mol['original_smiles'] = orig_smi
+        mol['original_canonized_smiles'] = orig_smi
         # Reorder dictionary to have 'original_smiles' first
-        mol = {'original_smiles': mol['original_smiles'], **{k: v for k, v in mol.items() if k != 'original_smiles'}}
+        mol = {'original_canonized_smiles': mol['original_canonized_smiles'], **{k: v for k, v in mol.items() if k != 'original_canonized_smiles'}}
         augmented_molecules.append(mol)
 
     try:
@@ -135,27 +135,36 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
         print(f"Failed to save {file_path}: {e}")
 
 
-# def extract_smiles_classification(molecules):
-#     """
-#     Converts list of molecule dicts to a SMILES: classification_details dict.
-#
-#     Parameters:
-#     - molecules (list): List of molecule dictionaries.
-#
-#     Returns:
-#     - dict: Mapping from SMILES to their classification details.
-#     """
-#     extracted = {}
-#     for molecule in molecules:
-#         smiles = molecule.get('smiles')
-#         if smiles:
-#             classification = {
-#                 "superclass": molecule.get('superclass', {}).get('name', 'Unknown'),
-#                 "class": molecule.get('class', {}).get('name', 'Unknown'),
-#                 "subclass": molecule.get('subclass', {}).get('name', 'Unknown')
-#             }
-#             extracted[smiles] = classification
-#     return extracted
+def save_smiles_mapping(original_smiles: List[str], canonical_smiles: List[str], output_dir: str):
+    """
+    Saves a mapping from original SMILES to canonical SMILES in a JSON file.
+
+    Parameters:
+    - original_smiles (List[str]): List of original SMILES strings.
+    - canonical_smiles (List[str]): List of corresponding canonical SMILES strings.
+    - output_dir (str): Directory where the mapping.json file will be saved.
+
+    Returns:
+    - None
+    """
+    if len(original_smiles) != len(canonical_smiles):
+        raise ValueError("The number of original SMILES must match the number of canonical SMILES.")
+
+    # Create the mapping dictionary
+    mapping = {orig: canon for orig, canon in zip(original_smiles, canonical_smiles)}
+
+    # Ensure the output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Define the path for the mapping.json file
+    mapping_file_path = os.path.join(output_dir, 'mapping.json')
+
+    try:
+        with open(mapping_file_path, 'w') as f:
+            json.dump(mapping, f, indent=4)
+        print(f"Successfully saved SMILES mapping to {mapping_file_path}.")
+    except Exception as e:
+        print(f"Failed to save SMILES mapping: {e}")
 
 
 def merge_intermediate_files(
@@ -164,7 +173,7 @@ def merge_intermediate_files(
 ) -> None:
     """
     Merges all intermediate JSON files in the specified directory into a single JSON file.
-    Preserves the 'original_smiles' field for each molecule.
+    Preserves the 'original_canonized_smiles' field for each molecule.
 
     Parameters:
     - output_dir (str): Directory containing intermediate JSON files.
@@ -251,14 +260,15 @@ def check_all_smiles_present(
     # Extract original SMILES from the final output
     output_original_smiles = set()
     for molecule in molecules:
-        original_smiles = molecule.get('original_smiles')
+        original_smiles = molecule.get('original_canonized_smiles')
         if original_smiles:
             output_original_smiles.add(original_smiles)
 
     # Create set from original_smiles_list
-    original_smiles_set = set([smi.strip() for smi in original_smiles_list if smi.strip()])
+    original_smiles_set = set([smi for smi in original_smiles_list])
 
     # Identify missing original SMILES
+    print(len(original_smiles_set), len(output_original_smiles))
     missing_original_smiles = original_smiles_set - output_original_smiles
 
     # Map original SMILES to their canonical SMILES

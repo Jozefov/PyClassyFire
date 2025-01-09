@@ -157,7 +157,7 @@ def process_batches_with_saving_and_retry(
     print(f'Already processed SMILES: {len(already_processed)}')
     logger.info(f'Already processed SMILES: {len(already_processed)}')
 
-    # Identify remaining SMILES to process based on original_smiles
+    # Identify remaining SMILES to process based on original_canonized_smiles
     remaining_smiles = set(smiles_list) - already_processed
     print(f'Remaining SMILES to process: {len(remaining_smiles)}')
     logger.info(f'Remaining SMILES to process: {len(remaining_smiles)}')
