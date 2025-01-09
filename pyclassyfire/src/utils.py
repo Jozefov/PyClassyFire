@@ -290,7 +290,6 @@ def check_all_smiles_present(
     original_smiles_set = set([smi for smi in original_smiles_list])
 
     # Identify missing original SMILES
-    print(len(original_smiles_set), len(output_original_smiles))
     missing_original_smiles = original_smiles_set - output_original_smiles
 
     # Map original SMILES to their canonical SMILES
