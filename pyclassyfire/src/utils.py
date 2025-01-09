@@ -2,6 +2,7 @@ from rdkit import Chem
 import os
 import json
 import logging
+from pathlib import Path
 import re
 from typing import List, Dict, Tuple, Set
 from rdkit import RDLogger
@@ -135,14 +136,14 @@ def save_intermediate_results(batch_num, molecules, original_smiles, output_dir)
         print(f"Failed to save {file_path}: {e}")
 
 
-def save_smiles_mapping(original_smiles: List[str], output_dir: str):
+def save_smiles_mapping(original_smiles: List[str], output_path: str):
     """
     Saves a mapping from original SMILES to canonical SMILES in a JSON file.
-    Ensures that the mapping is accurate by verifying each pair.
+    Canonicalizes each SMILES string once and creates the mapping.
 
     Parameters:
     - original_smiles (List[str]): List of original SMILES strings (deduplicated).
-    - output_dir (str): Directory where the mapping.json file will be saved.
+    - output_path (str): Path to the output directory or JSON file where the mapping will be saved.
 
     Returns:
     - None
@@ -151,28 +152,34 @@ def save_smiles_mapping(original_smiles: List[str], output_dir: str):
         raise ValueError("The original_smiles list is empty. No mapping to save.")
 
     # Canonicalize the original SMILES
-    canonical_smiles = []
+    mapping = {}
     for smi in original_smiles:
         molecule = MoleCule.from_smiles(smi)
         if molecule.canonical_smiles:
-            canonical_smiles.append(molecule.canonical_smiles)
+            mapping[smi] = molecule.canonical_smiles
         else:
-            canonical_smiles.append(None)
+            mapping[smi] = None
             logging.warning(f"Failed to canonicalize SMILES: {smi}")
 
     # Check for any canonicalization failures
-    if any(canon is None for canon in canonical_smiles):
+    failed_canon = {orig: canon for orig, canon in mapping.items() if canon is None}
+    if failed_canon:
+        for orig in failed_canon:
+            logging.error(f"Canonicalization failed for SMILES: {orig}")
         raise ValueError("One or more SMILES strings could not be canonicalized. Check logs for details.")
 
-    # Create the mapping dictionary
-    mapping = {orig: canon for orig, canon in zip(original_smiles, canonical_smiles)}
+    # Determine if output_path is a directory or a file
+    path = Path(output_path)
+    if path.is_dir() or not path.suffix:
+        # If it's a directory or has no suffix, treat it as a directory and save mapping.json inside
+        os.makedirs(output_path, exist_ok=True)
+        mapping_file_path = os.path.join(output_path, 'mapping.json')
+    else:
+        # Treat it as a file path
+        mapping_file_path = output_path
+        os.makedirs(path.parent, exist_ok=True)
 
-    # Ensure the output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Define the path for the mapping.json file
-    mapping_file_path = os.path.join(output_dir, 'mapping.json')
-
+    # Save the mapping
     try:
         with open(mapping_file_path, 'w') as f:
             json.dump(mapping, f, indent=4)

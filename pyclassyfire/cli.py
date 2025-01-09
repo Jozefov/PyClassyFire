@@ -12,6 +12,10 @@ from .src.utils import (
 )
 from .src.batch import process_batches_with_saving_and_retry
 
+@click.group()
+def cli():
+    """PyClassyFire: A tool to classify SMILES using the ClassyFire API."""
+    pass
 
 @click.command()
 @click.argument('input_file', type=click.Path(exists=True))
@@ -19,7 +23,7 @@ from .src.batch import process_batches_with_saving_and_retry
 @click.option('--batch_size', default=100, show_default=True, help='Number of SMILES per batch (max 100).')
 @click.option('--max_retries', default=3, show_default=True, help='Maximum number of retries for failed batches.')
 @click.option('--retry_delay', default=10, show_default=True, help='Delay between retries in seconds.')
-def main(input_file, output_dir, batch_size, max_retries, retry_delay):
+def classify(input_file, output_dir, batch_size, max_retries, retry_delay):
     """
     Classify SMILES using the ClassyFire API.
 
@@ -127,5 +131,57 @@ def main(input_file, output_dir, batch_size, max_retries, retry_delay):
     click.echo(f"Final classification results have been saved to {final_output_path}.")
 
 
+@cli.command()
+@click.argument('input_file', type=click.Path(exists=True))
+@click.argument('output_path', type=click.Path())
+def map(input_file, output_path):
+    """
+    Generate a mapping from original SMILES to canonical SMILES without sending to the API.
+
+    INPUT_FILE: Path to the input file containing SMILES strings (formats: txt, tsv, csv, json).
+    OUTPUT_PATH: Path to the output directory or JSON file where mapping.json will be saved.
+    """
+    # 1. Determine Input File Type and Load SMILES
+    input_suffix = os.path.splitext(input_file)[1].lower()
+    if input_suffix == '.json':
+        with open(input_file, 'r') as f:
+            identifiers = json.load(f)
+            # Handle different JSON structures
+            if isinstance(identifiers, dict):
+                # If JSON is a dictionary, extract all values
+                identifiers = list(identifiers.values())
+            elif not isinstance(identifiers, list):
+                raise ValueError("JSON input must be a list or a dictionary of SMILES strings.")
+    elif input_suffix in ['.txt', '.tsv', '.csv']:
+        if input_suffix == '.csv':
+            df = pd.read_csv(input_file, header=None)
+        else:  # .txt or .tsv
+            df = pd.read_csv(input_file, sep='\t', header=None)
+        identifiers = df.iloc[:, 0].tolist()
+    else:
+        raise ValueError("Input file must be a JSON, TXT, TSV, or CSV file containing SMILES strings.")
+
+    # 2. Prepare Original SMILES List (deduplicated)
+    original_smiles_list = list(set([smi.strip() for smi in identifiers if smi.strip()]))
+    click.echo(f'Total unique original SMILES: {len(original_smiles_list)}')
+
+    # 3. Save the Mapping from Original to Canonical SMILES
+    save_smiles_mapping(original_smiles_list, output_path)
+
+
+@cli.command()
+@click.argument('intermediate_dir', type=click.Path(exists=True, file_okay=False))
+@click.argument('final_output_path', type=click.Path())
+def merge(intermediate_dir, final_output_path):
+    """
+    Merge all intermediate JSON files into a single final JSON file.
+
+    INTERMEDIATE_DIR: Path to the directory containing intermediate JSON files.
+    FINAL_OUTPUT_PATH: Path to the output JSON file where merged results will be saved.
+    """
+    # 1. Merge Intermediate Files
+    merge_intermediate_files(intermediate_dir, final_output_path)
+
+
 if __name__ == '__main__':
-    main()
+    cli()
