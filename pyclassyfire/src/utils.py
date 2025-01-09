@@ -3,7 +3,7 @@ import os
 import json
 import logging
 import re
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from rdkit import RDLogger
 
 # Suppress RDKit warnings globally
@@ -58,7 +58,8 @@ def take_class(raw: dict | None) -> str:
         return 'Unknown'
 
 
-def load_existing_results(output_dir: str) -> Tuple[set, int]:
+
+def load_existing_results(output_dir: str) -> Tuple[Set[str], int]:
     """
     Loads existing intermediate JSON files and returns a set of already processed original SMILES.
     Also returns the highest batch number to continue numbering correctly.
@@ -68,7 +69,7 @@ def load_existing_results(output_dir: str) -> Tuple[set, int]:
 
     Returns:
     - tuple:
-        - already_processed (set): Set of original SMILES strings that have been processed.
+        - already_processed (set): Set of original SMILES strings that have been successfully processed.
         - max_batch_num (int): The highest batch number found in existing files.
     """
     already_processed = set()
@@ -90,10 +91,11 @@ def load_existing_results(output_dir: str) -> Tuple[set, int]:
                     data = json.load(f)
                     # Each file has a single batch_id key mapping to a list of molecule dicts
                     for batch_id, molecules in data.items():
-                        for molecule in molecules:
-                            original_smiles = molecule.get('original_smiles')
-                            if original_smiles:
-                                already_processed.add(original_smiles)
+                        if molecules:  # Only add if molecules are present
+                            for molecule in molecules:
+                                original_smiles = molecule.get('original_smiles')
+                                if original_smiles:
+                                    already_processed.add(original_smiles)
                 logging.info(f"Loaded results from {file_path}")
             except Exception as e:
                 logging.error(f"Failed to load {file_path}: {e}")
