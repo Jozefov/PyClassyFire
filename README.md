@@ -1,3 +1,5 @@
+![PyClassyFire Logo](assets/logo.jpeg)
+
 # PyClassyFire
 
 A Python client for the [ClassyFire API](http://classyfire.wishartlab.com/) for large-scale chemical compound classification.
