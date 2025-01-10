@@ -32,7 +32,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'pyclassyfire=pyclassyfire.cli:main',
+            'pyclassyfire=pyclassyfire.cli:cli',
         ],
     },
     project_urls={
