@@ -47,6 +47,11 @@ def classify(input_file, output_dir, batch_size, max_retries, retry_delay):
         else:  # .txt or .tsv
             df = pd.read_csv(input_file, sep='\t', header=None)
         identifiers = df.iloc[:, 0].tolist()
+
+        if input_suffix in ['.txt', '.tsv', '.csv']:
+            if identifiers and identifiers[0].strip().upper() == 'SMILES':
+                click.echo("Header detected and skipped.")
+                identifiers = identifiers[1:]
     else:
         raise ValueError("Input file must be a JSON, TXT, TSV, or CSV file containing SMILES strings.")
 
