@@ -231,7 +231,7 @@ Example of an output entry:
  ]
 ```
 
-- original_canonized_smiles : original smiles canonized by rdkit send for classification
+- original_canonized_smiles : original smiles canonized by rdkit sent for classification
 - smiles : smiles returned by classyfire api
 
 ## Tutorials
