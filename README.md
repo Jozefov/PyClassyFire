@@ -86,7 +86,7 @@ pyclassyfire classify <input_file> <output_dir> [OPTIONS]
 **Example**
 
 ```bash
-pyclassyfire data/unique_smiles.tsv results/ --batch_size 100 --max_retries 2 --retry_delay 15
+pyclassyfire classify data/unique_smiles.tsv results/ --batch_size 100 --max_retries 2 --retry_delay 15
 ```
 
 ### **2. map**
