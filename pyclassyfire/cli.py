@@ -17,7 +17,7 @@ def cli():
     """PyClassyFire: A tool to classify SMILES using the ClassyFire API."""
     pass
 
-@click.command()
+@cli.command()
 @click.argument('input_file', type=click.Path(exists=True))
 @click.argument('output_dir', type=click.Path())
 @click.option('--batch_size', default=100, show_default=True, help='Number of SMILES per batch (max 100).')
