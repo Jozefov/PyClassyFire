@@ -1,9 +1,0 @@
-2025-01-11 06:53:26,677 - INFO - All SMILES: 10
-2025-01-11 06:53:26,677 - INFO - Already processed SMILES: 0
-2025-01-11 06:53:26,678 - INFO - Remaining SMILES to process: 10
-2025-01-11 06:53:26,678 - INFO - Remaining unique SMILES to process after removing duplicates: 10
-2025-01-11 06:53:26,678 - INFO - Total remaining batches to process: 1
-2025-01-11 06:53:27,967 - INFO - Submitted Batch 1 with Query ID 12027178
-2025-01-11 06:53:41,920 - INFO - Batch 1 completed with 10 molecules.
-2025-01-11 06:53:41,924 - INFO - Saved intermediate results to ../sample_data/output/intermediate_1.json
-2025-01-11 06:53:41,925 - INFO - Processing completed.
