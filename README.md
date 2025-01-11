@@ -86,7 +86,7 @@ pyclassyfire classify <input_file> <output_dir> [OPTIONS]
 **Example**
 
 ```bash
-pyclassyfire classify /sample_data/sample_smiles.tsv results/ --batch_size 100 --max_retries 2 --retry_delay 15
+pyclassyfire classify sample_data/sample_smiles.tsv results/ --batch_size 100 --max_retries 2 --retry_delay 15
 ```
 
 ### **2. map**
@@ -125,7 +125,7 @@ pyclassyfire merge <intermediate_dir> <final_output_path>
 **Example**
 
 ```bash
-pyclassyfire merge sample_data/intermediate_results/ results/final_output.json
+pyclassyfire merge results/intermediate_results/ results/final_output.json
 ```
 
 ## Handling Interruptions
