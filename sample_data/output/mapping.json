@@ -1,0 +1,12 @@
+{
+    "C[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)N": "CC(C)CC(NC(=O)C(C)N)C(=O)O",
+    "C1=CC(=CC(=C1)NC(=O)COCC(=O)NC2=C(C=C(C=C2)Cl)C(=O)O)C3=COC=C3": "O=C(COCC(=O)Nc1ccc(Cl)cc1C(=O)O)Nc1cccc(-c2ccoc2)c1",
+    "C1CC(C1)C(=O)N2CCCC(C2)COC3=CC=CC(=C3)C(=O)NC4CC4": "O=C(NC1CC1)c1cccc(OCC2CCCN(C(=O)C3CCC3)C2)c1",
+    "C/C(=N/NC(=O)CC1=CC=C(C=C1)Br)/C2=CC=C(C=C2)NC(=O)CC3=CC=C(C=C3)OC": "COc1ccc(CC(=O)Nc2ccc(C(C)=NNC(=O)Cc3ccc(Br)cc3)cc2)cc1",
+    "CCOC1=CC=C(C=C1)S(=O)(=O)[C@H]2CS(=O)(=O)C[C@@H]2NCCC3=CNC4=CC=CC=C43": "CCOc1ccc(S(=O)(=O)C2CS(=O)(=O)CC2NCCc2c[nH]c3ccccc23)cc1",
+    "COC1=C(C=C(C=C1)Br)CNC23CC4CC(C2)CC(C4)C3": "COc1ccc(Br)cc1CNC12CC3CC(CC(C3)C1)C2",
+    "CCC1=CC=CC=C1NC(=O)CN2C(=O)N3C4=C(C(=O)N(C3=N2)C)N(C=C4C5=CC=CC=C5)C": "CCc1ccccc1NC(=O)Cn1nc2n(C)c(=O)c3c(c(-c4ccccc4)cn3C)n2c1=O",
+    "C[C@@H]1CCC[C@@H](N1CCCC(C2=CC=CC=C2)(C3=CC=CC=N3)O)C": "CC1CCCC(C)N1CCCC(O)(c1ccccc1)c1ccccn1",
+    "CC1=C(C(N2C(=O)CCSC2=N1)C3=C(C=C(C=C3)Cl)Cl)C(=O)OCC(C)C": "CC1=C(C(=O)OCC(C)C)C(c2ccc(Cl)cc2Cl)N2C(=O)CCSC2=N1",
+    "C1=CC(=C(C=C1COC(=O)C2=CC(=C(C=C2)O)O)O)O[C@H]3[C@@H]([C@H]([C@@H]([C@H](O3)CO)O)O)O": "O=C(OCc1ccc(OC2OC(CO)C(O)C(O)C2O)c(O)c1)c1ccc(O)c(O)c1"
+}
