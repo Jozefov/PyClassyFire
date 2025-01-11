@@ -105,7 +105,7 @@ pyclassyfire map <input_file> <output_path>
 **Example**
 
 ```bash
-pyclassyfire map /sample_data/sample_smiles.tsv results/custom_mapping.json
+pyclassyfire map sample_data/sample_smiles.tsv results/custom_mapping.json
 ```
 
 ### **3. merge**
@@ -125,7 +125,7 @@ pyclassyfire merge <intermediate_dir> <final_output_path>
 **Example**
 
 ```bash
-pyclassyfire merge /sample_data/intermediate_results/ results/final_output.json
+pyclassyfire merge sample_data/intermediate_results/ results/final_output.json
 ```
 
 ## Handling Interruptions
@@ -137,7 +137,7 @@ If the classification process is disrupted or interrupted, you can easily resume
 1. **Rerun the Classification Command:**
 
     ```bash
-    pyclassyfire classify /sample_data/sample_smiles.tsv results/ --batch_size 50 --max_retries 5 --retry_delay 15
+    pyclassyfire classify sample_data/sample_smiles.tsv results/ --batch_size 50 --max_retries 5 --retry_delay 15
     ```
 
 2. **Automatic Detection:**
@@ -151,7 +151,7 @@ If the classification process is disrupted or interrupted, you can easily resume
     If you encounter server overload or performance issues, consider reducing the `--batch_size` parameter to decrease the number of SMILES processed per batch. For example:
 
     ```bash
-    pyclassyfire classify /sample_data/sample_smiles.tsv results/ --batch_size 25 --max_retries 5 --retry_delay 15
+    pyclassyfire classify sample_data/sample_smiles.tsv results/ --batch_size 25 --max_retries 5 --retry_delay 15
     ```
 
 ## Output Directory Structure
@@ -159,7 +159,7 @@ If the classification process is disrupted or interrupted, you can easily resume
 When you run the PyClassyFire classification script, the specified output directory will be organized as follows:
 
 - **logs/**  
-  This subdirectory contains log files that record the details of the classification process, each resumed proces generates a separate log.
+  This subdirectory contains log files that record the details of the classification process, each resumed proces generates a separate log. Stored in intermediate_results folder.
 
 
 - **intermediate_results/**  
