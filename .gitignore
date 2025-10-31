@@ -238,3 +238,8 @@ data/
 
 # Agent configs
 agent_configs/
+
+# ===============================
+# Project-specific temp files
+# ===============================
+notebooks/20251031_MSGMSn_update.ipynb
