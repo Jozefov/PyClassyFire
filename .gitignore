@@ -1,15 +1,19 @@
-# Byte-compiled / optimized / DLL files
+# ===============================
+# Python bytecode / caches
+# ===============================
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
 
 # C extensions
 *.so
 
-# Distribution / packaging
+# ===============================
+# Build / packaging artifacts
+# ===============================
 .Python
 build/
-develop-eggs/
 dist/
 downloads/
 eggs/
@@ -20,14 +24,16 @@ parts/
 sdist/
 var/
 wheels/
+wheelhouse/
+share/python-wheels/
+pip-wheel-metadata/
+.venv-build/
 *.egg-info/
-.installed.cfg
 *.egg
+.installed.cfg
 MANIFEST
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -35,64 +41,200 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# ===============================
+# Test / coverage tooling
+# ===============================
 htmlcov/
 .tox/
 .nox/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
+.cache/
 coverage.xml
+nosetests.xml
 *.cover
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
+# Type checkers / linters caches
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# Pyre type checker
 .pyre/
+.pytype/
+.ruff_cache/
 
-# pyright type checker
-.pyright/
+# ===============================
+# Translations
+# ===============================
+*.mo
+*.pot
 
-# profiling data
-.prof
+# ===============================
+# Django / Flask / Scrapy (common)
+# ===============================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+instance/
+.webassets-cache
+.scrapy
 
-# Pycharm
-.idea/
+# ===============================
+# Sphinx / PyBuilder / MkDocs
+# ===============================
+docs/_build/
+target/
+site/
+# mkdocs typically generates /site, keep canonical:
+# (your previous line was "# mkdocs documentation" -> "/site")
+/site
 
-# VSCode
+# ===============================
+# Jupyter / IPython
+# ===============================
+.ipynb_checkpoints/
+**/*-checkpoint.ipynb
+.jupyter/
+profile_default/
+ipython_config.py
+
+# ===============================
+# Python envs / managers
+# ===============================
+.python-version
+# pipenv
+#Pipfile.lock
+# PEP 582
+__pypackages__/
+# Local virtual environments
+.env
+.env.*
+*.env
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.envs/
+.conda/
+conda-env/
+.mamba/
+.mambaforge/
+.poetry/
+.poetry-cache/
+
+# ===============================
+# Experiment logs / outputs / caches
+# ===============================
+logs/
+**/*.log
+*.out
+*.err
+output/
+outputs/
+results/
+artifacts/
+artifacts_tmp/
+scratch/
+tmp/
+temp/
+tmp_*/
+**/.tmp/
+**/.cache/
+
+# ===============================
+# Checkpoints / model weights
+# ===============================
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.h5
+*.joblib
+*.pkl
+*.safetensors
+checkpoints/
+models/
+lightning_logs/
+# in-notebook lightning logs
+notebooks/**/lightning_logs/
+
+# ===============================
+# Experiment tracking dirs
+# ===============================
+wandb/
+runs/                   # TensorBoard
+events.out.tfevents.*   # TensorBoard event files
+.tensorboard-info/
+mlruns/                 # MLflow
+mlartifacts/
+ray_results/            # Ray Tune
+tune_results/
+dask-worker-space/
+
+# ===============================
+# Cluster / scheduler outputs
+# ===============================
+slurm-*.out
+slurm-*.err
+*.o[0-9]*
+*.e[0-9]*
+*.po[0-9]*
+*.pe[0-9]*
+
+# ===============================
+# Keys / certificates (avoid committing secrets)
+# ===============================
+*.key
+*.pem
+*.cert
+*.crt
+
+# ===============================
+# IDE / Editor metadata
+# ===============================
+# VS Code
 .vscode/
+*.code-workspace
 
-# Local directories
+# JetBrains
+.idea/
+*.iml
+
+# Other editors
+.spyproject/
+.ropeproject/
+.sublime-project
+.sublime-workspace
+.spyderproject
+
+# ===============================
+# OS metadata
+# ===============================
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===============================
+# Containers / CI aux state
+# ===============================
+.docker/
+docker-compose.override.yml
+*.pod
+*.pid
+
+# ===============================
+# Project-specific data (MSn datasets and caches)
+# ===============================
 data/
+
+# Agent configs
+agent_configs/
