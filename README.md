@@ -35,9 +35,13 @@ PyClassyFire is a Python client designed to interact with the [ClassyFire API](h
 	```
  3. **Install the Package:**
 	```bash
-	pip install .
+  pip install -e .
 	```
-4. **Verify Installation:**
+  4. **Register the Jupyter Kernel (for notebook usage):**
+   	```bash
+  python -m ipykernel install --user --name pyclassyfire_env --display-name "Python (pyclassyfire_env)"
+	```
+  5. **Verify Installation:**
     ```bash
 	pyclassyfire --help
 	```
